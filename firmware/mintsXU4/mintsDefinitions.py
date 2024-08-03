@@ -24,8 +24,8 @@ portInfo                  = pd.read_csv('https://raw.githubusercontent.com/mi3nt
 
 # nodeInfo                  = pd.read_csv('https://raw.githubusercontent.com/mi3nts/AirQualityAnalysisWorkflows/main/influxdb/nodered-docker/sharedAirDFWSupport.csv')
 
-nodeInfo                  = pd.read_csv('https://raw.githubusercontent.com/mi3nts/mqttLiveV2/main/lists/sharedAirDFWSupport.csv') # For Testing Purposes --> Different from the NODE ID LOOK UP
-
+# nodeInfo                  = pd.read_csv('https://raw.githubusercontent.com/mi3nts/mqttLiveV2/main/lists/sharedAirDFWSupport.csv') 
+nodeInfo                  = pd.read_csv('https://raw.githubusercontent.com/mi3nts/mqttPMCorrections/main/lists/testNodeIDs.csv') # Only for testing Purposes --> Different from the NODE ID LOOK UP
 
 mqttBrokerDC              = "mqtt.circ.utdallas.edu"
 mqttBrokerLoRa            = "mqtt.lora.trecis.cloud"

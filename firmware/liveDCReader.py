@@ -104,26 +104,17 @@ def on_message(client, userdata, msg):
             print("==================================================================")
             print(" - - - ---------------- MINTS DATA RECEIVED ----------------- - - ")             
             print(" ------------------- Data for Live Node found ------------------- ")
-            print("Node ID         : " + nodeID)
-            print("Sensor ID       : " + sensorID)
-            print("Node Index      : " + str(nodeIndex))
-            print("LN Date Time    : " + str(dateTime))
-            print("Sensor Data     : " +  str(sensorDictionary))
+            # print("Node ID         : " + nodeID)
+            # print("Sensor ID       : " + sensorID)
+            # print("Node Index      : " + str(nodeIndex))
+            # print("LN Date Time    : " + str(dateTime))
+            # print("Sensor Data     : " +  str(sensorDictionary))
             if sensorID != "MBC001":
-               
-                print() 
-                print(" - - - ==== - - - ======================== - - - ==== - - - ")
-                print(" - - - ==== - - - ==== Status Changed ==== - - - ==== - - - ")
-                # for nodeObject in nodeObjects:
-                #     nodeObject.changeStateV2()
-   
+            
                 print()
-                print(" - - - MINTS DATA RECEIVED - - - ")
-      
-                print("Data      :" + str(sensorDictionary))
+                print(" - - - MINTS NODE RECOGNIZED - - - ")
+                # print("Data      :" + str(sensorDictionary))
                 nodeObjects[nodeIndex].update(sensorID,sensorDictionary)
-
-
 
     except Exception as e:
         print("[ERROR] Could not publish data, error: {}".format(e))

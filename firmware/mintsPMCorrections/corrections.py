@@ -34,6 +34,8 @@ import json
 #        - Temperature validity 
 #        - Dew Likelyhood
 #        - Climate Data Current Validity
+#        - Do not do the ML corrections for now 
+# Go after a new sensor ID without ML Corrections
 
 
 climateSensor     = mD.climateSensor
@@ -64,8 +66,6 @@ def doPrediction(sensorID,sensorDictionary,dateTime):
         dateTime        = dateTime
         climateData     = loadJSONLatestClimate(climateSensor)
         dateTimeClimate = datetime.datetime.strptime(climateData['dateTime'], "%Y-%m-%d %H:%M:%S.%f")
-
- 
 
         pc0_1, pc0_3, pc0_5,\
             pc1_0, pc2_5, pc5_0, \
