@@ -109,12 +109,10 @@ def on_message(client, userdata, msg):
             # print("Node Index      : " + str(nodeIndex))
             # print("LN Date Time    : " + str(dateTime))
             # print("Sensor Data     : " +  str(sensorDictionary))
-            if sensorID != "MBC001":
-            
-                print()
-                print(" - - - MINTS NODE RECOGNIZED - - - ")
-                # print("Data      :" + str(sensorDictionary))
-                nodeObjects[nodeIndex].update(sensorID,sensorDictionary)
+            # print()
+            # print(" - - - MINTS NODE RECOGNIZED - - - ")
+            # print("Data      :" + str(sensorDictionary))
+            nodeObjects[nodeIndex].update(sensorID,sensorDictionary)
 
     except Exception as e:
         print("[ERROR] Could not publish data, error: {}".format(e))

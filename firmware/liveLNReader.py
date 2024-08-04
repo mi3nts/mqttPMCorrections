@@ -42,14 +42,8 @@ print(nodeIDs)
 sensorIDs             = sensorInfo['sensorID']
 portIDs               = portInfo['portID']
 
-currentState = 0
+# currentState = 0
 nodeObjects  = []
-
-# def getStateV2(timeIn):
-#     stateOut = int((timeIn + liveSpanSec/2)/liveSpanSec);
-#     # print("Current State")
-#     # print(stateOut)
-#     return stateOut;
 
     
 def getNodeIndex(nodeIDRead):
@@ -64,12 +58,9 @@ decoder = json.JSONDecoder(object_pairs_hook=collections.OrderedDict)
 
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code "+str(rc))
-    topic = "utd/lora/app/4/device/+/event/up"
+    topic = "utd/lora/app/5/device/+/event/up"
     client.subscribe(topic)
     print("Subscrbing to Topic: "+ topic)
-
-
-
 
     print("Initializing Node Objects")
     for index, nodeInfoRow in nodeInfo.iterrows():
@@ -79,25 +70,19 @@ def on_connect(client, userdata, flags, rc):
         print("------------------------------------------------------")        
 
 
-
-
-
-
-
-
 def on_message(client, userdata, msg):
-    global currentState    
-    # try:
-    if (True):
-        # print("==================================================================")
-        # print(" - - - MINTS DATA RECEIVED - - - ")
+ 
+    try:
+    # if (True):
+        print("==================================================================")
+        print(" - - - MINTS DATA RECEIVED - - - ")
         # print(msg.payload)
         
         dateTime,gatewayID,nodeID,sensorID,framePort,base16Data = \
             mLR.loRaSummaryWrite(msg,portInfo)
-        # print("Node ID         : " + nodeID)
-        # print("Sensor ID       : " + sensorID)
-        # print(currentState)
+        print("Node ID         : " + nodeID)
+        print("Sensor ID       : " + sensorID)
+
         if nodeID is not None:
             currentTimeInSec  = dateTime.timestamp()
             liveState         = mP.getStateV2(currentTimeInSec)
@@ -110,24 +95,13 @@ def on_message(client, userdata, msg):
                 print("==================================================================")
                 print(" - - - ---------------- MINTS DATA RECEIVED ----------------- - - ")             
                 print(" ------------------- Data for Live Node found ------------------- ")
-                print("Node ID         : " + nodeID)
-                print("Sensor ID       : " + sensorID)
-                print("Node Index      : " + str(nodeIndex))
-                print("Sensor Data     : " +  str(sensorDictionary))
-                # print(sensorDictionary)
-                if currentState != liveState:
-                    currentState = liveState
-                    print(" - - - ==== - - - ==== Status Changed ==== - - - ==== - - - ")
-                    for nodeObject in nodeObjects:
-                        # print("Changing Status")
-                        nodeObject.changeStateV2()
-    
+                # print("Node ID         : " + nodeID)
+                # print("Sensor ID       : " + sensorID)
+                # print("Node Index      : " + str(nodeIndex))
+                # print("LN Date Time    : " + str(dateTime))
+                # print("Sensor Data     : " +  str(sensorDictionary))
                 # print()
-                # print(" - - - MINTS DATA RECEIVED - - - ")
-                # print("Node ID   :" + nodeID)
-                # print("Sensor ID :" + sensorID)
-                # print("Node Index:" + str(nodeIndex))
-                # print("Date Time :"  +str(dateTime))            
+                # print(" - - - MINTS NODE RECOGNIZED - - - ")
                 # print("Data      :" + str(sensorDictionary))
                 nodeObjects[nodeIndex].update(sensorID,sensorDictionary)
                 
@@ -137,16 +111,8 @@ def on_message(client, userdata, msg):
         else:
             print("Invalid data received")
             
-
-        # if nodeID in nodeIDs:
-        #     print("Date Time       : " + str(dateTime))
-        #     print("Port ID         : " + str(framePort))
-        #     print("Base 16 Data    : " + base16Data)
-        #     mLR.sensorSendLoRa(dateTime,nodeID,sensorID,framePort,base16Data)
-        
-    
-    # except Exception as e:
-    #     print("[ERROR] Could not publish data, error: {}".format(e))
+    except Exception as e:
+        print("[ERROR] Could not publish data, error: {}".format(e))
 
 
 # Create an MQTT client and attach our routines to it.
