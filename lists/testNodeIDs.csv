@@ -1,2 +1,2 @@
 nodename,nodeID,pmSensor,climateSensor,gpsSensor,latitude,longitude,altitude,activity
-001e06323a37,Central Hub 8,Central Node,XU4,1,,,,,
+Central Hub 8,001e06323a37,IPS7100,BME280,GPSGPGGA2,32.7795,-96.8649,125.5,1
