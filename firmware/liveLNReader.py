@@ -84,8 +84,8 @@ def on_message(client, userdata, msg):
         print("Sensor ID       : " + sensorID)
 
         if nodeID is not None:
-            currentTimeInSec  = dateTime.timestamp()
-            liveState         = mP.getStateV2(currentTimeInSec)
+            # currentTimeInSec  = dateTime.timestamp()
+            # liveState         = mP.getStateV2(currentTimeInSec)
             nodeIndex         = getNodeIndex(nodeID)
 
             sensorDictionary  = mLR.sensorSendLoRa(dateTime,nodeID,sensorID,framePort,base16Data)
