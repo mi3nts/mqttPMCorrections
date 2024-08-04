@@ -38,7 +38,9 @@ import sys
 # referencePklsFolder  = mD.referencePklsFolder
 # mergedPklsFolder     = mD.mergedPklsFolder
 # modelsPklsFolder     = mD.modelsPklsFolder
-liveFolder           = mD.liveFolder
+# liveFolder           = mD.liveFolder
+rawFolder            = mD.rawFolder
+
 
 class node:
     def __init__(self,nodeInfoRow):
@@ -110,6 +112,14 @@ class node:
             print(" - - - CLIMATE SENSOR FOUND - - - ")
             self.nodeReaderClimate(sensorDictionary)
 
+    def nodeReaderClimate(self,jsonData):
+        try:
+            self.dataInClimate  = jsonData
+            self.ctNowClimate   = datetime.strptime(self.dataInClimate['dateTime'],'%Y-%m-%d %H:%M:%S.%f')
+            if (self.ctNowClimate>self.climateDateTime):
+                self.currentUpdateClimate()
+        except Exception as e:
+            print("[ERROR] Could not read JSON data, error: {}".format(e))
 
 
     def nodeReaderPM(self,jsonData):
@@ -173,10 +183,11 @@ class node:
 
             if self.correctionRequirment:
                 # At this point - apply the corrections
-                print("Applying corrections") 
+                print("For Formation conditions are met") 
                 self.humidityCorrectedPC()
                 self.humidityCorrectedPM()
-   
+            
+            self.doCSV()
 
 
 
@@ -192,14 +203,7 @@ class node:
         dewPoint = 243.04 * (math.log(humidity/100.0) + ((17.625 * temperature)/(243.04 + temperature))) / (17.625 - math.log(humidity/100.0) - ((17.625 * temperature)/(243.04 + temperature)))
         return dewPoint
 
-    def nodeReaderClimate(self,jsonData):
-        try:
-            self.dataInClimate  = jsonData
-            self.ctNowClimate   = datetime.strptime(self.dataInClimate['dateTime'],'%Y-%m-%d %H:%M:%S.%f')
-            if (self.ctNowClimate>self.lastClimateDateTime):
-                self.currentUpdateClimate()
-        except Exception as e:
-            print("[ERROR] Could not read JSON data, error: {}".format(e))
+
     
     def currentUpdateClimate(self):
 
@@ -267,14 +271,18 @@ class node:
             self.momentaryValidity = 0
 
         if self.humidity > 40:
-            print("Humidity data is valid")
+        # if self.humidity > 4: # ONLY FOR TESTING 
+            print("Humidity measurment is large enough to for fog to be formed")
             self.humidityLikelyhoodValidity = 1
         else:
             self.humidityLikelyhoodValidity = 0
 
         T_D = self.temperature - self.dewPoint
-        if T_D < 2.5:
-            print("Dewpint data is valid")
+        
+        if T_D < 2.5 and self.temperature > -50:
+        # if T_D < 25: # ONLY FOR TESTING 
+
+            print("Dewpint and temperature readings are close enough for fog to be formed")
             self.dewPointValidity = 1
         else: 
             self.dewPointValidity = 0
@@ -486,13 +494,19 @@ class node:
         print()        
         print("===============MINTS===============")
         # print(sensorDictionary)
+        self.dateTimeStrCSV = str(self.pmDateTime.year).zfill(4)+ \
+                "-" + str(self.pmDateTime.month).zfill(2) + \
+                "-" + str(self.pmDateTime.day).zfill(2) + \
+                " " + str(self.pmDateTime.hour).zfill(2) + \
+                ":" + str(self.pmDateTime.minute).zfill(2) + \
+                ":" + str(self.pmDateTime.second).zfill(2) + '.000'
 
         # ADJUST THE SENSOR ID HERE
-        # mP.writeCSV3( mP.getWritePathDateCSV(liveFolder,self.nodeID,\
-        #     datetime.strptime(self.dateTimeStrCSV,'%Y-%m-%d %H:%M:%S.%f'),\
-        #         "calibrated"),sensorDictionary)
+        mP.writeCSV3( mP.getWritePathDateCSV(rawFolder,self.nodeID,\
+            datetime.strptime(self.dateTimeStrCSV,'%Y-%m-%d %H:%M:%S.%f'),\
+                "IPS7100MHC001"),sensorDictionary)
         print("CSV Written")
-        # mL.writeMQTTLatestRepublish(sensorDictionary,"mintsCalibrated",self.nodeID)=
+        mL.writeMQTTRepublish(sensorDictionary,self.nodeID,"IPS7100MHC001")
 
 
 

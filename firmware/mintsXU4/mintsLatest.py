@@ -75,6 +75,17 @@ def connect(mqtt_client, mqtt_username, mqtt_password, broker_endpoint, port):
     return True
 
 
+def writeMQTTRepublish(sensorDictionary,nodeID,sensorName):
+
+    if connect(mqtt_client, mqttUN, mqttPW, broker, port):
+        try:
+            mqtt_client.publish(nodeID+"/"+sensorName,json.dumps(sensorDictionary))
+
+        except Exception as e:
+            print("[ERROR] Could not publish data, error: {}".format(e))
+    
+    return True
+
 def writeMQTTLatest(sensorDictionary,sensorName):
 
     if connect(mqtt_client, mqttUN, mqttPW, broker, port):
