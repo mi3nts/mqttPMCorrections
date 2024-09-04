@@ -24,7 +24,7 @@ import statistics
 from collections import OrderedDict
 # import pytz
 import sys
-
+import joblib
 
 ####SUMMARY - CLIMATE DATA READ - WORK ON PM DATA NEXT USING CORRECTIONS
 
@@ -39,7 +39,12 @@ import sys
 # mergedPklsFolder     = mD.mergedPklsFolder
 # modelsPklsFolder     = mD.modelsPklsFolder
 # liveFolder           = mD.liveFolder
-rawFolder            = mD.rawFolder
+
+rawFolder              = mD.rawFolder
+
+modelFile              = mD.modelFile
+loadedPMModel          = joblib.load(modelFile)
+
 
 
 class node:
@@ -87,20 +92,26 @@ class node:
         self.cor_pm2_5      = -100
         self.cor_pm5_0      = -100
         self.cor_pm10_0     = -100
-        # self.ml_pm2_5       = 0
-
+      
         # if self.climateSensor  in {"BME280", "BME680", "BME688CNR"}:
         self.temperature         = -100
         self.pressure            = -100
         self.humidity            = -100
         self.dewPoint            = -100
 
+
+        self.mlPM2_5       = -100
+        self.mlCorrected    = 0
+        
         # Validity Variables 
         self.temperatureValidity        = 0 # Checks if temeperature readings are in range 
         self.humidityValidity           = 0 # Checks if humidity readings are in range 
+        self.pressureValidity           = 0
         self.momentaryValidity          = 0 # Checks if climate readings are reasont 
         self.humidityLikelyhoodValidity = 0 # Checks if humdity readings make sense for fog to be created 
         self.dewPointValidity           = 0 # Checks if temperature and dew point is close enough to make sense for fog to be create
+        
+        self.climateRequirment          = 0 # Climate  check 
         self.correctionRequirment       = 0 # Master  check 
          
     def update(self,sensorID,sensorDictionary):
@@ -180,13 +191,17 @@ class node:
 
             # Check if conditions are met for fog to be generated 
             self.getValidity()
-
+            self.getClimateValidity()
+            
             if self.correctionRequirment:
                 # At this point - apply the corrections
                 print("For Formation conditions are met") 
                 self.humidityCorrectedPC()
                 self.humidityCorrectedPM()
             
+            if self.climateRequirment:
+                self.mlCorrectedPM()
+
             self.doCSV()
 
 
@@ -194,7 +209,10 @@ class node:
 
 
     def is_valid_temperature(self,temp):
-        return -20 <= temp <= 50  # Assuming temperature is in Celsius
+        return -20 <= temp <= 50  # Assuming temperature is in celsius
+
+    def is_valid_pressure(self,pressure):
+        return  950 <= pressure <= 1100  # Assuming pressure is in milibars
 
     def is_valid_humidity(self,humidity):
         return 0 <= humidity <= 100  # Assuming humidity is in percentage
@@ -289,6 +307,17 @@ class node:
 
         self.correctionRequirment =  self.temperatureValidity and self.humidityValidity and self.momentaryValidity \
                     and self.humidityLikelyhoodValidity and self.dewPointValidity
+
+
+    def getClimateValidity(self):
+        if self.is_valid_pressure(self.pressure):
+            print("Humidity is valid")
+            self.pressureValidity = 1
+        else:
+            self.pressureValidity = 0
+        
+        self.climateRequirment =  self.temperatureValidity and self.humidityValidity and self.momentaryValidity \
+            and self.pressureValidity
 
     def humidityCorrectedPC(self):
 
@@ -457,6 +486,31 @@ class node:
         print("Humidity Corrected PM")
 
 
+    def mlCorrectedPM(self):
+        try:
+            foggy = float(self.temperature) - float(self.dewPoint)
+            data = {'cor_pm2_5': [float(self.cor_pm2_5)],\
+                     'temperature': [float(self.temperature)],\
+                       'pressure': [self.pressure],\
+                          'humidity':[self.humidity], \
+                            'dewPoint':[self.dewPoint],\
+                                'temp_dew':[foggy]}
+            dfInput = pd.DataFrame(data)
+            prediction = self.makePrediction(loadedPMModel, dfInput)
+            self.mlPM2_5     =  prediction["Predictions"][0]
+            self.mlCorrected =  1
+            return 
+        except Exception as e:
+            print("An error  occured")
+            print(e)
+            self.mlPM2_5     = self.cor_pm2_5
+            self.mlCorrected =  0 
+            return 
+
+    def makePrediction(self,modelName, est_df):
+        prediction = pd.DataFrame(modelName.predict(est_df),columns=["Predictions"])
+        return prediction   
+
     def doCSV(self):
 
         sensorDictionary = OrderedDict([
@@ -486,13 +540,25 @@ class node:
             ("dewPointValidity"             ,self.dewPointValidity),
             ("correctionRequirment"         ,self.correctionRequirment)
             ])
-        
         print(sensorDictionary)
 
+        predictedDictionary = OrderedDict([
+            ("dateTime"                     ,str(self.pmDateTime)), # always the same
+            ("mlPM2_5"                      ,self.mlPM2_5),
+            ("mlCorrected"                  ,self.mlCorrected),
+            ("correctionRequirment"         ,self.correctionRequirment),
+            ("climateRequirment"            ,self.climateRequirment),
+            ("temperature"                  ,self.temperature),
+            ("pressure"                     ,self.pressure), 
+            ("humidity"                     ,self.humidity),
+            ("dewPoint"                     ,self.dewPoint),
+            ])
+        
+        print(predictedDictionary)
 
-      
         print()        
         print("===============MINTS===============")
+
         # print(sensorDictionary)
         self.dateTimeStrCSV = str(self.pmDateTime.year).zfill(4)+ \
                 "-" + str(self.pmDateTime.month).zfill(2) + \
@@ -501,19 +567,23 @@ class node:
                 ":" + str(self.pmDateTime.minute).zfill(2) + \
                 ":" + str(self.pmDateTime.second).zfill(2) + '.000'
 
+
         # ADJUST THE SENSOR ID HERE
+        dateTimeIn  = datetime.strptime(self.dateTimeStrCSV,'%Y-%m-%d %H:%M:%S.%f')
+
         mP.writeCSV3( mP.getWritePathDateCSV(rawFolder,self.nodeID,\
-            datetime.strptime(self.dateTimeStrCSV,'%Y-%m-%d %H:%M:%S.%f'),\
+            dateTimeIn,\
                 "IPS7100MHC001"),sensorDictionary)
-        print("CSV Written")
+        print("IPS7100MHC001 Written")
         mL.writeMQTTRepublish(sensorDictionary,self.nodeID,"IPS7100MHC001")
 
 
 
-
-
     
-
-
+        mP.writeCSV3( mP.getWritePathDateCSV(rawFolder,self.nodeID,\
+            dateTimeIn,\
+                "MLPM002"),predictedDictionary)
+        print("MLPM002 Written")
+        mL.writeMQTTRepublish(predictedDictionary,self.nodeID,"MLPM002")
 
 
