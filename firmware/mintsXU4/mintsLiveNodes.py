@@ -189,6 +189,8 @@ class node:
                                     self.pm1_0, self.pm2_5, self.pm5_0, \
                                         self.pm10_0 
 
+            self.mlPM2_5 =  self.cor_pm2_5
+
             # Check if conditions are met for fog to be generated 
             self.getValidity()
             self.getClimateValidity()
@@ -483,6 +485,8 @@ class node:
         self.cor_pm5_0   = self.cor_pm2_5 + m5_0*self.cor_pc5_0
         self.cor_pm10_0  = self.cor_pm5_0 + m10_0*self.cor_pc10_0
 
+        self.mlPM2_5 =  self.cor_pm2_5
+        
         print("Humidity Corrected PM")
 
 
@@ -582,8 +586,8 @@ class node:
     
         mP.writeCSV3( mP.getWritePathDateCSV(rawFolder,self.nodeID,\
             dateTimeIn,\
-                "MLPM002"),predictedDictionary)
-        print("MLPM002 Written")
-        mL.writeMQTTRepublish(predictedDictionary,self.nodeID,"MLPM002")
+                "MLPM003"),predictedDictionary)
+        print("MLPM003 Written")
+        mL.writeMQTTRepublish(predictedDictionary,self.nodeID,"MLPM003")
 
 
